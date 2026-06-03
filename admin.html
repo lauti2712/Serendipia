@@ -96,6 +96,7 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
     <div class="tabs">
       <button class="tab-btn active" onclick="showTab('community')">📸 Fotos comunidad</button>
       <button class="tab-btn" onclick="showTab('albums')">🎞️ Fotos de álbumes</button>
+      <button class="tab-btn" onclick="showTab('postits')">🗒️ Post-its</button>
     </div>
 
     <!-- COMMUNITY PHOTOS -->
@@ -126,7 +127,19 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
       </div>
     </div>
   </div>
-</div>
+
+    <!-- POSTITS -->
+    <div class="tab-section" id="tab-postits">
+      <div class="sec-header">
+        <div>
+          <h3>Post-its</h3>
+          <div class="count-tag" id="postits-count"></div>
+        </div>
+      </div>
+      <div id="postits-admin-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+  </div>
 
 <script>
 const SUPA_URL='https://cmjiinrsmfxnqbefzttd.supabase.co';
@@ -160,9 +173,10 @@ function showTab(name){
   document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  document.querySelectorAll('.tab-btn')[['community','albums'].indexOf(name)].classList.add('active');
+  document.querySelectorAll('.tab-btn')[['community','albums','postits'].indexOf(name)].classList.add('active');
   if(name==='community')loadCommunityPhotos();
   if(name==='albums')loadAlbumPhotos();
+  if(name==='postits')loadPostitsAdmin();
 }
 
 // FORMAT DATE
@@ -276,6 +290,67 @@ async function deleteAllAlbumPhotos(){
     await fetch(SUPA_URL+'/rest/v1/album?album_id=not.is.null',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
     loadAlbumPhotos();
   }catch(e){alert('Error: '+e.message);}
+}
+
+
+async function loadPostitsAdmin(){
+  const list=document.getElementById('postits-admin-list');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>Cargando...</div>';
+  try{
+    const data=await supa('/rest/v1/postits?select=*&order=created_at.desc');
+    const count=document.getElementById('postits-count');
+    count.textContent=(data?data.length:0)+' mensajes';
+    if(!data||data.length===0){list.innerHTML='<div class="empty">Sin post-its todavía.</div>';return;}
+    list.innerHTML='';
+    const COLORS=[
+      {bg:'#FFF176',text:'#3E3000'},{bg:'#F48FB1',text:'#4A0020'},
+      {bg:'#80DEEA',text:'#00363A'},{bg:'#A5D6A7',text:'#1B3A1C'},
+      {bg:'#CE93D8',text:'#2E0040'},{bg:'#FFCC80',text:'#3E1F00'},
+      {bg:'#EF9A9A',text:'#3B0000'},{bg:'#B0BEC5',text:'#1A2327'},
+    ];
+    data.forEach(p=>{
+      const col=COLORS[p.color_idx%COLORS.length];
+      const isDeleted=p.deleted===true;
+      const div=document.createElement('div');
+      div.style.cssText='background:'+col.bg+';color:'+col.text+';border-radius:12px;padding:14px 16px;opacity:'+(isDeleted?'0.5':'1')+';';
+      const date=new Date(p.created_at);
+      const MONTHS=['enero','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      const dateStr=date.getDate()+' '+MONTHS[date.getMonth()]+' '+date.getFullYear();
+      div.innerHTML=
+        (isDeleted?'<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;opacity:0.7;">Removido del muro</div>':'')+
+        '<div style="font-size:14px;line-height:1.55;white-space:pre-wrap;margin-bottom:10px;'+(isDeleted?'text-decoration:line-through;':'')+'">'+p.text+'</div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'+
+          '<div style="font-size:11px;opacity:0.6;">'+(p.author||'Anónimo')+' · '+dateStr+'</div>'+
+          '<div style="display:flex;gap:6px;">'+
+            (isDeleted
+              ? '<button onclick="adminRestorePostit('+p.id+',this)" style="background:rgba(0,0,0,0.12);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:'+col.text+';">↩ Restaurar</button>'
+              : ''
+            )+
+            '<button onclick="adminDeletePostit('+p.id+',this)" style="background:rgba(200,20,60,0.2);border:1px solid rgba(200,20,60,0.3);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:#c00;">✕ Eliminar</button>'+
+          '</div>'+
+        '</div>';
+      list.appendChild(div);
+    });
+  }catch(e){list.innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function adminDeletePostit(id,btn){
+  if(!confirm('¿Eliminar permanentemente este post-it? Esta acción no se puede deshacer.'))return;
+  btn.disabled=true;btn.textContent='...';
+  try{
+    await fetch(SUPA_URL+'/rest/v1/postits?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    btn.closest('div[style*="border-radius:12px"]').remove();
+    const count=document.getElementById('postits-count');
+    count.textContent=(parseInt(count.textContent)-1)+' mensajes';
+  }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='✕ Eliminar';}
+}
+
+async function adminRestorePostit(id,btn){
+  btn.disabled=true;btn.textContent='...';
+  try{
+    await fetch(SUPA_URL+'/rest/v1/postits?id=eq.'+id,{method:'PATCH',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({deleted:false})});
+    loadPostitsAdmin();
+  }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='↩ Restaurar';}
 }
 
 async function toggleHide(id, currentlyHidden, btn, type){
