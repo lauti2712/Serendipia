@@ -819,7 +819,7 @@ document.getElementById('edit-avatar').addEventListener('change',function(){
 // ── COMMUNITY ──
 async function loadCommunityPhotos(){
   try{
-    const data=await supaFetch('/rest/v1/album?select=*&album_id=is.null&hidden=not.eq.true&order=created_at.desc&limit=60');
+    const data=await supaFetch('/rest/v1/album?select=*&album_id=is.null&hidden=is.false&order=created_at.desc&limit=60');
     renderCommunityCollage(data);
   }catch(e){document.getElementById('community-collage').innerHTML='<div class="empty-state" style="grid-column:1/-1">No se pudieron cargar las fotos.</div>';}
 }
@@ -866,7 +866,7 @@ async function loadAlbums(){
 async function renderAlbums(albums){
   const grid=document.getElementById('albums-grid');
   if(!albums||albums.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div style="font-size:36px;margin-bottom:16px;opacity:0.7">🎞️</div>Sin álbumes todavía.</div>';return;}
-  const withCovers=await Promise.all(albums.map(async a=>{try{const p=await supaFetch('/rest/v1/album?select=photo_url&album_id=eq.'+a.id+'&hidden=not.eq.true&limit=4');return{...a,photos:p};}catch(e){return{...a,photos:[]};}}));
+  const withCovers=await Promise.all(albums.map(async a=>{try{const p=await supaFetch('/rest/v1/album?select=photo_url&album_id=eq.'+a.id+'&hidden=is.false&limit=4');return{...a,photos:p};}catch(e){return{...a,photos:[]};}}));
   grid.innerHTML='';
   withCovers.forEach((a,i)=>{
     let coverHtml='';
@@ -905,7 +905,7 @@ async function openAlbum(id){
   document.getElementById('detail-collage').innerHTML='<div class="loading-state"><div class="spinner"></div>Cargando fotos...</div>';
   try{
     const[album]=await supaFetch('/rest/v1/albums?select=*&id=eq.'+id);
-    const photos=await supaFetch('/rest/v1/album?select=*&album_id=eq.'+id+'&hidden=not.eq.true&order=created_at.asc');
+    const photos=await supaFetch('/rest/v1/album?select=*&album_id=eq.'+id+'&hidden=is.false&order=created_at.asc');
     document.getElementById('detail-title').textContent=album.title;
     document.getElementById('detail-date-label').textContent='✦ '+formatFullDate(album.event_date);
     document.getElementById('detail-desc').textContent=album.description||'';
