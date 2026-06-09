@@ -1731,13 +1731,25 @@ function toggleRecipient(name,item){
 
 function updateRecipientsDisplay(){
   const wrap=document.getElementById('agr-recipients-selected');
+  wrap.innerHTML='';
   if(selectedRecipients.length===0){
-    wrap.innerHTML='<span style="color:rgba(200,160,255,0.4);font-size:15px;">Elegí una o más personas...</span>';
+    const ph=document.createElement('span');
+    ph.style.cssText='color:rgba(200,160,255,0.4);font-size:15px;';
+    ph.textContent='Elegí una o más personas...';
+    wrap.appendChild(ph);
     return;
   }
-  wrap.innerHTML=selectedRecipients.map(n=>
-    '<span class="recipient-chip-sel" onclick="event.stopPropagation();toggleRecipient(''+n+'',document.querySelector('[data-name=\"'+n+'\"]'))">'+n+' ✕</span>'
-  ).join('');
+  selectedRecipients.forEach(n=>{
+    const chip=document.createElement('span');
+    chip.className='recipient-chip-sel';
+    chip.textContent=n+' ✕';
+    chip.addEventListener('click',function(e){
+      e.stopPropagation();
+      const item=document.querySelector('[data-name="'+n+'"]');
+      toggleRecipient(n,item);
+    });
+    wrap.appendChild(chip);
+  });
 }
 
 // Close dropdown on outside click
@@ -1790,18 +1802,33 @@ function renderCortito(p,i,container){
   card.className='post-card';card.style.animationDelay=(i*0.05)+'s';
   card.dataset.id=p.id;
   const date=p.post_date?formatFullDate(p.post_date):timeAgo(p.created_at);
-  const editedAt=p.updated_at&&p.updated_at!==p.created_at?'<span class="post-edited-badge">· editado</span>':'';
-  card.innerHTML=
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'+
-      '<div><div class="post-author">'+p.author+'</div><div class="post-date">'+date+' '+editedAt+'</div></div>'+
-    '</div>'+
-    '<div class="post-text" id="cort-text-'+p.id+'">'+escapeHtml(p.text)+'</div>'+
-    '<div class="post-footer">'+
-      '<div style="display:flex;gap:6px;">'+
-        '<button class="post-btn" onclick="startEditCortito('+p.id+',this)">✏️ editar</button>'+
-        (p.updated_at&&p.updated_at!==p.created_at?'<button class="post-btn" onclick="showEditHistory('cortitos','+p.id+')">📋 ver ediciones</button>':'')+
-      '</div>'+
-    '</div>';
+  const hasEdits=p.updated_at&&p.updated_at!==p.created_at;
+
+  const header=document.createElement('div');
+  header.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;gap:12px;';
+  header.innerHTML='<div><div class="post-author">'+p.author+'</div><div class="post-date">'+date+(hasEdits?' <span class="post-edited-badge">· editado</span>':'')+'</div></div>';
+  card.appendChild(header);
+
+  const textEl=document.createElement('div');
+  textEl.className='post-text';textEl.id='cort-text-'+p.id;
+  textEl.textContent=p.text;
+  card.appendChild(textEl);
+
+  const footer=document.createElement('div');footer.className='post-footer';
+  const btnWrap=document.createElement('div');btnWrap.style.cssText='display:flex;gap:6px;';
+
+  const editBtn=document.createElement('button');editBtn.className='post-btn';editBtn.textContent='✏️ editar';
+  editBtn.onclick=function(){startEditCortito(p.id,this);};
+  btnWrap.appendChild(editBtn);
+
+  if(hasEdits){
+    const histBtn=document.createElement('button');histBtn.className='post-btn';histBtn.dataset.hist='1';
+    histBtn.textContent='📋 ver ediciones';
+    histBtn.onclick=()=>showEditHistory('cortitos',p.id);
+    btnWrap.appendChild(histBtn);
+  }
+  footer.appendChild(btnWrap);
+  card.appendChild(footer);
   container.appendChild(card);
 }
 
@@ -1892,24 +1919,43 @@ function renderAgradecimiento(p,i,container){
   card.className='post-card';card.style.animationDelay=(i*0.05)+'s';
   card.dataset.id=p.id;
   const date=p.post_date?formatFullDate(p.post_date):timeAgo(p.created_at);
-  const editedAt=p.updated_at&&p.updated_at!==p.created_at?'<span class="post-edited-badge">· editado</span>':'';
+  const hasEdits=p.updated_at&&p.updated_at!==p.created_at;
   const recipients=p.recipients?JSON.parse(p.recipients):[];
-  const recipientsHtml=recipients.length?
-    '<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;"><span style="font-size:12px;color:var(--text-muted);margin-right:4px;">Para:</span>'+
-    recipients.map(r=>'<span class="recipients-tag">'+r+'</span>').join('')+'</div>':'';
-  card.innerHTML=
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'+
-      '<div><div class="post-author">'+(p.author||'Anónimo')+' agradece</div><div class="post-date">'+date+' '+editedAt+'</div></div>'+
-      '<div style="font-size:24px;">🙏</div>'+
-    '</div>'+
-    recipientsHtml+
-    '<div class="post-text" id="agr-text-'+p.id+'">'+escapeHtml(p.text)+'</div>'+
-    '<div class="post-footer">'+
-      '<div style="display:flex;gap:6px;">'+
-        '<button class="post-btn" onclick="startEditAgr('+p.id+',this)">✏️ editar</button>'+
-        (p.updated_at&&p.updated_at!==p.created_at?'<button class="post-btn" onclick="showEditHistory('agradecimientos','+p.id+')">📋 ver ediciones</button>':'')+
-      '</div>'+
-    '</div>';
+
+  const header=document.createElement('div');
+  header.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;gap:12px;';
+  header.innerHTML='<div><div class="post-author">'+(p.author||'Anónimo')+' agradece</div><div class="post-date">'+date+(hasEdits?' <span class="post-edited-badge">· editado</span>':'')+'</div></div><div style="font-size:24px;">🙏</div>';
+  card.appendChild(header);
+
+  if(recipients.length){
+    const recWrap=document.createElement('div');
+    recWrap.style.cssText='margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;';
+    const lbl=document.createElement('span');lbl.style.cssText='font-size:12px;color:var(--text-muted);margin-right:4px;';lbl.textContent='Para:';
+    recWrap.appendChild(lbl);
+    recipients.forEach(r=>{const t=document.createElement('span');t.className='recipients-tag';t.textContent=r;recWrap.appendChild(t);});
+    card.appendChild(recWrap);
+  }
+
+  const textEl=document.createElement('div');
+  textEl.className='post-text';textEl.id='agr-text-'+p.id;
+  textEl.textContent=p.text;
+  card.appendChild(textEl);
+
+  const footer=document.createElement('div');footer.className='post-footer';
+  const btnWrap=document.createElement('div');btnWrap.style.cssText='display:flex;gap:6px;';
+
+  const editBtn=document.createElement('button');editBtn.className='post-btn';editBtn.textContent='✏️ editar';
+  editBtn.onclick=function(){startEditAgr(p.id,this);};
+  btnWrap.appendChild(editBtn);
+
+  if(hasEdits){
+    const histBtn=document.createElement('button');histBtn.className='post-btn';histBtn.dataset.hist='1';
+    histBtn.textContent='📋 ver ediciones';
+    histBtn.onclick=()=>showEditHistory('agradecimientos',p.id);
+    btnWrap.appendChild(histBtn);
+  }
+  footer.appendChild(btnWrap);
+  card.appendChild(footer);
   container.appendChild(card);
 }
 
