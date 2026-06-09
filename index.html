@@ -1676,20 +1676,17 @@ async function deletePostitFromHistory(id,btn){
   }catch(e){alert('Error al borrar.');btn.disabled=false;btn.textContent='✕ borrar';}
 }
 
-async function loadBeerUrl(){
+// ── URL DEL BAR ── cambiá este valor para actualizar el link
+const BAR_URL = 'https://meet.google.com/vpo-erge-nbn';
+
+function loadBeerUrl(){
   const btn=document.getElementById('nav-beer');
   if(!btn)return;
-  try{
-    const data=await supaFetch('/rest/v1/settings?select=*&key=eq.beer_url&limit=1');
-    if(data&&data.length>0&&data[0].value){
-      btn.href=data[0].value;
-      btn.title='Entrar al bar';
-      btn.onclick=null;
-    } else {
-      btn.href='#';
-      btn.onclick=function(e){e.preventDefault();alert('Sin link por ahora, coordiná en el grupo 🍺');};
-    }
-  }catch(e){
+  if(BAR_URL&&BAR_URL.trim()!==''){
+    btn.href=BAR_URL;
+    btn.target='_blank';
+    btn.onclick=null;
+  } else {
     btn.href='#';
     btn.onclick=function(e){e.preventDefault();alert('Sin link por ahora, coordiná en el grupo 🍺');};
   }
