@@ -1127,9 +1127,9 @@ document.getElementById('fab-postit').addEventListener('mouseleave',e=>{e.curren
 
 async function loadPostits(){
   try{
-    const data=await supaFetch('/rest/v1/postits?select=*&deleted=not.eq.true&order=created_at.asc');
+    const data=await supaFetch('/rest/v1/postits?select=*&order=created_at.asc');
     document.getElementById('postits-layer').innerHTML='';
-    if(data&&data.length)data.forEach(p=>renderPostit(p));
+    if(data&&data.length)data.filter(p=>!p.deleted).forEach(p=>renderPostit(p));
   }catch(e){console.error('postits error',e);}
 }
 
@@ -1687,8 +1687,11 @@ async function loadBeerUrl(){
     const data=await supaFetch('/rest/v1/settings?select=*&key=eq.beer_url&limit=1');
     if(data&&data.length>0&&data[0].value){
       const btn=document.getElementById('fab-beer');
-      btn.href=data[0].value;
-      btn.style.display='flex';
+      if(btn){
+        btn.href=data[0].value;
+        btn.style.cssText=btn.style.cssText.replace('display:none','display:flex');
+        btn.style.display='flex';
+      }
     }
   }catch(e){console.error('beer url error',e);}
 }
