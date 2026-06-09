@@ -121,6 +121,27 @@ nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:
 .loading-state{text-align:center;padding:40px;color:var(--text-muted);font-size:14px;}
 .spinner{width:24px;height:24px;border:2px solid rgba(200,160,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+/* CORTITOS & AGRADEZCO */
+.post-card{background:var(--card-bg);backdrop-filter:blur(16px);border:1px solid var(--card-border);border-radius:18px;padding:22px 26px;margin-bottom:14px;animation:fadeUp 0.35s ease both;}
+.post-author{font-size:13px;font-weight:500;color:var(--accent);margin-bottom:2px;}
+.post-date{font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+.post-text{font-size:15px;color:var(--text-on-purple);line-height:1.7;margin:12px 0;white-space:pre-wrap;word-break:break-word;}
+.post-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(200,160,255,0.1);}
+.post-btn{background:none;border:none;color:rgba(200,160,255,0.5);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;padding:4px 8px;border-radius:6px;transition:all 0.15s;}
+.post-btn:hover{background:rgba(200,160,255,0.1);color:var(--accent);}
+.post-edited-badge{font-size:10px;color:var(--text-muted);font-style:italic;}
+.recipients-tag{display:inline-flex;align-items:center;gap:4px;background:rgba(200,160,255,0.15);color:var(--accent);padding:3px 10px;border-radius:99px;font-size:12px;}
+.recipient-chip-sel{display:inline-flex;align-items:center;gap:4px;background:rgba(200,160,255,0.2);color:white;padding:3px 10px;border-radius:99px;font-size:12px;cursor:pointer;}
+.recipient-chip-sel:hover{background:rgba(200,160,255,0.35);}
+.dropdown-item{padding:10px 14px;font-size:14px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;gap:8px;}
+.dropdown-item:hover{background:rgba(200,160,255,0.1);}
+.dropdown-item.selected{background:rgba(200,160,255,0.15);color:var(--accent);}
+.dropdown-item.selected::before{content:'✓';font-size:12px;}
+.history-entry{background:rgba(255,255,255,0.05);border:1px solid rgba(200,160,255,0.15);border-radius:12px;padding:14px 16px;}
+.history-entry-meta{font-size:11px;color:var(--text-muted);margin-bottom:8px;}
+.history-entry-text{font-size:14px;color:var(--text-on-purple);line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+.char-counter-warn{color:var(--accent2)!important;}
+
 /* EVENTOS */
 .evento-card{background:var(--card-bg);backdrop-filter:blur(16px);border:1px solid var(--card-border);border-radius:18px;padding:20px 24px;margin-bottom:12px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;animation:fadeUp 0.35s ease both;}
 .evento-card:hover{border-color:rgba(200,160,255,0.5);transform:translateX(4px);}
@@ -271,6 +292,16 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
   <div class="lightbox-caption" id="lightbox-caption"></div>
 </div>
 
+
+<!-- EDIT HISTORY MODAL -->
+<div class="modal-backdrop" id="history-modal">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+    <h3 id="history-modal-title">Historial de ediciones</h3>
+    <div id="history-modal-content" style="margin-top:16px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
 <!-- FLOATING POSTITS -->
 <!-- FAB BUTTONS -->
 <div style="position:fixed;bottom:28px;right:28px;z-index:60;display:flex;flex-direction:column;align-items:center;gap:10px;">
@@ -314,6 +345,8 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
     <button class="nav-btn" onclick="showSection('albums')">🎞️ Álbumes</button>
     <button class="nav-btn" onclick="showSection('foro')">💬 Foro</button>
     <button class="nav-btn" onclick="showSection('eventos')">📅 Eventos</button>
+    <button class="nav-btn" onclick="showSection('cortitos')">📣 Cortitos</button>
+    <button class="nav-btn" onclick="showSection('agradezco')">🙏 Agradezco</button>
   </nav>
 
   <div id="app">
@@ -595,6 +628,82 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
       </div>
     </div>
 
+
+    <!-- CORTITOS E IMPORTANTES -->
+    <div class="section" id="sec-cortitos">
+      <div style="height:80px;"></div>
+      <div style="max-width:720px;margin:0 auto;padding:0 24px;">
+        <span class="section-label">✦ noticias de la comunidad</span>
+        <h2 class="section-heading">Cortitos<br>e importantes</h2>
+        <div class="glass-card">
+          <div class="form-grid">
+            <div class="field">
+              <label>Tu nombre</label>
+              <select id="cort-author">
+                <option value="" disabled selected>Elegí tu nombre</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input type="date" id="cort-date"/>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:20px;">
+            <label>Tu cortito e importante</label>
+            <textarea id="cort-text" placeholder="Contá tu noticia..." style="min-height:140px;" maxlength="5000"></textarea>
+            <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;" id="cort-counter">0 / 5000</div>
+          </div>
+          <button class="btn btn-primary" id="btn-cort" onclick="createCortito()">✦ Publicar</button>
+          <div class="msg error" id="err-cort"></div>
+          <div class="msg success" id="ok-cort">¡Publicado! 📣</div>
+        </div>
+        <div id="cortitos-list"><div class="loading-state"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- AGRADEZCO -->
+    <div class="section" id="sec-agradezco">
+      <div style="height:80px;"></div>
+      <div style="max-width:720px;margin:0 auto;padding:0 24px;">
+        <span class="section-label">✦ gratitud de la comunidad</span>
+        <h2 class="section-heading">Agradezco</h2>
+        <div class="glass-card">
+          <div class="form-grid">
+            <div class="field">
+              <label>De parte de</label>
+              <select id="agr-author">
+                <option value="" disabled selected>Elegí tu nombre</option>
+                <option value="Anónimo">Anónimo</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input type="date" id="agr-date"/>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:20px;">
+            <label>Dirigido a (podés elegir varios)</label>
+            <div id="agr-recipients-wrap" style="background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.3);border-radius:12px;padding:10px 12px;min-height:46px;cursor:pointer;" onclick="toggleRecipientsDropdown()">
+              <div id="agr-recipients-selected" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                <span style="color:rgba(200,160,255,0.4);font-size:15px;">Elegí una o más personas...</span>
+              </div>
+            </div>
+            <div id="agr-recipients-dropdown" style="display:none;background:#3D1264;border:1px solid rgba(200,160,255,0.3);border-radius:12px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:20;position:relative;">
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:20px;">
+            <label>Tu agradecimiento</label>
+            <textarea id="agr-text" placeholder="Escribí lo que querés agradecer..." style="min-height:140px;" maxlength="5000"></textarea>
+            <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;" id="agr-counter">0 / 5000</div>
+          </div>
+          <button class="btn btn-primary" id="btn-agr" onclick="createAgradecimiento()">✦ Agradecer</button>
+          <div class="msg error" id="err-agr"></div>
+          <div class="msg success" id="ok-agr">¡Agradecimiento publicado! 🙏</div>
+        </div>
+        <div id="agradezco-list"><div class="loading-state"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 <footer>weareSerendipia &nbsp;·&nbsp; cada encuentro es una serendipia &nbsp;·&nbsp; ✦</footer>
@@ -671,7 +780,7 @@ document.addEventListener('mouseout',e=>{if(e.target.closest('[data-tip]'))hideT
 
 // NAV
 let currentSection='';
-const SECTIONS=['birthdays','community','albums','foro','eventos'];
+const SECTIONS=['birthdays','community','albums','foro','eventos','cortitos','agradezco'];
 function showSection(name){
   document.getElementById('hero-section').style.display='none';
   document.getElementById('main-nav').style.display='flex';
@@ -685,6 +794,8 @@ function showSection(name){
     if(name==='albums')loadAlbums();
     if(name==='foro')loadTopics();
     if(name==='eventos')loadEventos();
+    if(name==='cortitos')loadCortitos();
+    if(name==='agradezco')loadAgradezco();
   }
   // show/hide postits for this section
   document.querySelectorAll('.postit').forEach(el=>{
@@ -1563,6 +1674,338 @@ async function restorePostit(id,btn){
     await loadPostits();
   }catch(e){alert('Error al restaurar.');btn.disabled=false;btn.textContent='↩ restaurar';}
 }
+
+
+// ── CORTITOS E IMPORTANTES ──
+let cortitosEditId=null;
+let selectedRecipients=[];
+
+async function loadCortitosAuthors(){
+  try{
+    const data=await supaFetch('/rest/v1/birthdays?select=id,name&order=name.asc');
+    const sel=document.getElementById('cort-author');
+    if(data&&data.length){
+      data.forEach(b=>{
+        const opt=document.createElement('option');
+        opt.value=b.name;opt.textContent=b.name;
+        sel.appendChild(opt);
+      });
+    }
+  }catch(e){console.error('authors load error',e);}
+}
+
+async function loadAgradezcoAuthors(){
+  try{
+    const data=await supaFetch('/rest/v1/birthdays?select=id,name&order=name.asc');
+    const sel=document.getElementById('agr-author');
+    const drop=document.getElementById('agr-recipients-dropdown');
+    if(data&&data.length){
+      data.forEach(b=>{
+        // author select
+        const opt=document.createElement('option');
+        opt.value=b.name;opt.textContent=b.name;
+        sel.appendChild(opt);
+        // recipients dropdown
+        const item=document.createElement('div');
+        item.className='dropdown-item';
+        item.dataset.name=b.name;
+        item.textContent=b.name;
+        item.onclick=()=>toggleRecipient(b.name,item);
+        drop.appendChild(item);
+      });
+    }
+  }catch(e){console.error('agr authors error',e);}
+}
+
+function toggleRecipientsDropdown(){
+  const drop=document.getElementById('agr-recipients-dropdown');
+  drop.style.display=drop.style.display==='none'?'block':'none';
+}
+
+function toggleRecipient(name,item){
+  const idx=selectedRecipients.indexOf(name);
+  if(idx>-1){selectedRecipients.splice(idx,1);item.classList.remove('selected');}
+  else{selectedRecipients.push(name);item.classList.add('selected');}
+  updateRecipientsDisplay();
+}
+
+function updateRecipientsDisplay(){
+  const wrap=document.getElementById('agr-recipients-selected');
+  if(selectedRecipients.length===0){
+    wrap.innerHTML='<span style="color:rgba(200,160,255,0.4);font-size:15px;">Elegí una o más personas...</span>';
+    return;
+  }
+  wrap.innerHTML=selectedRecipients.map(n=>
+    '<span class="recipient-chip-sel" onclick="event.stopPropagation();toggleRecipient(''+n+'',document.querySelector('[data-name=\"'+n+'\"]'))">'+n+' ✕</span>'
+  ).join('');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#agr-recipients-wrap')&&!e.target.closest('#agr-recipients-dropdown')){
+    const drop=document.getElementById('agr-recipients-dropdown');
+    if(drop)drop.style.display='none';
+  }
+});
+
+// Char counters
+document.getElementById('cort-text').addEventListener('input',function(){
+  const c=document.getElementById('cort-counter');
+  c.textContent=this.value.length+' / 5000';
+  c.className=this.value.length>4500?'char-counter-warn':'';
+});
+document.getElementById('agr-text').addEventListener('input',function(){
+  const c=document.getElementById('agr-counter');
+  c.textContent=this.value.length+' / 5000';
+  c.className=this.value.length>4500?'char-counter-warn':'';
+});
+
+// Set today's date on load
+function setTodayDates(){
+  const today=new Date().toISOString().split('T')[0];
+  const cd=document.getElementById('cort-date');
+  const ad=document.getElementById('agr-date');
+  if(cd&&!cd.value)cd.value=today;
+  if(ad&&!ad.value)ad.value=today;
+}
+
+async function loadCortitos(){
+  setTodayDates();
+  if(!document.querySelector('#cort-author option[value]'))await loadCortitosAuthors();
+  const list=document.getElementById('cortitos-list');
+  list.innerHTML='<div class="loading-state"><div class="spinner"></div>Cargando...</div>';
+  try{
+    const data=await supaFetch('/rest/v1/cortitos?select=*&order=created_at.desc');
+    if(!data||data.length===0){
+      list.innerHTML='<div class="empty-state"><div style="font-size:36px;margin-bottom:16px;opacity:0.7">📣</div>Sin noticias todavía.<br>¡Sé el primero!</div>';
+      return;
+    }
+    list.innerHTML='';
+    data.forEach((p,i)=>renderCortito(p,i,list));
+  }catch(e){list.innerHTML='<div class="empty-state">Error al cargar.</div>';}
+}
+
+function renderCortito(p,i,container){
+  const card=document.createElement('div');
+  card.className='post-card';card.style.animationDelay=(i*0.05)+'s';
+  card.dataset.id=p.id;
+  const date=p.post_date?formatFullDate(p.post_date):timeAgo(p.created_at);
+  const editedAt=p.updated_at&&p.updated_at!==p.created_at?'<span class="post-edited-badge">· editado</span>':'';
+  card.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'+
+      '<div><div class="post-author">'+p.author+'</div><div class="post-date">'+date+' '+editedAt+'</div></div>'+
+    '</div>'+
+    '<div class="post-text" id="cort-text-'+p.id+'">'+escapeHtml(p.text)+'</div>'+
+    '<div class="post-footer">'+
+      '<div style="display:flex;gap:6px;">'+
+        '<button class="post-btn" onclick="startEditCortito('+p.id+',this)">✏️ editar</button>'+
+        (p.updated_at&&p.updated_at!==p.created_at?'<button class="post-btn" onclick="showEditHistory('cortitos','+p.id+')">📋 ver ediciones</button>':'')+
+      '</div>'+
+    '</div>';
+  container.appendChild(card);
+}
+
+async function createCortito(){
+  const author=document.getElementById('cort-author').value;
+  const text=document.getElementById('cort-text').value.trim();
+  const date=document.getElementById('cort-date').value;
+  const errEl=document.getElementById('err-cort');
+  const okEl=document.getElementById('ok-cort');
+  const btn=document.getElementById('btn-cort');
+  errEl.classList.remove('show');okEl.classList.remove('show');
+  if(!author||!text){errEl.textContent='Elegí tu nombre y escribí tu cortito.';errEl.classList.add('show');return;}
+  btn.disabled=true;btn.textContent='Publicando...';
+  try{
+    await supaFetch('/rest/v1/cortitos',{method:'POST',prefer:'return=minimal',body:JSON.stringify({author,text,post_date:date||null})});
+    document.getElementById('cort-text').value='';
+    document.getElementById('cort-counter').textContent='0 / 5000';
+    okEl.classList.add('show');
+    await loadCortitos();
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.classList.add('show');}
+  finally{btn.disabled=false;btn.textContent='✦ Publicar';}
+}
+
+function startEditCortito(id,btn){
+  const textEl=document.getElementById('cort-text-'+id);
+  const card=btn.closest('.post-card');
+  if(btn.textContent.includes('editar')){
+    // Switch to edit mode
+    const currentText=textEl.textContent;
+    textEl.innerHTML='<textarea style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.4);border-radius:10px;color:white;font-family:DM Sans,sans-serif;font-size:15px;line-height:1.7;padding:10px 12px;resize:vertical;min-height:100px;outline:none;" id="cort-edit-area-'+id+'">'+currentText+'</textarea>';
+    btn.textContent='✓ guardar';
+  } else {
+    // Save
+    const newText=document.getElementById('cort-edit-area-'+id).value.trim();
+    if(!newText)return;
+    saveCortito(id,newText,btn,textEl);
+  }
+}
+
+async function saveCortito(id,text,btn,textEl){
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    // Save edit history first
+    const orig=await supaFetch('/rest/v1/cortitos?select=text,updated_at&id=eq.'+id);
+    if(orig&&orig[0]){
+      await supaFetch('/rest/v1/cortitos_history',{method:'POST',prefer:'return=minimal',body:JSON.stringify({cortito_id:id,text:orig[0].text})});
+    }
+    await supaFetch('/rest/v1/cortitos?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({text,updated_at:new Date().toISOString()})});
+    textEl.textContent=text;
+    btn.textContent='✏️ editar';
+    btn.disabled=false;
+    // Show "ver ediciones" btn if not already there
+    const footer=btn.closest('.post-footer');
+    if(!footer.querySelector('[data-hist]')){
+      const hBtn=document.createElement('button');
+      hBtn.className='post-btn';hBtn.dataset.hist='1';
+      hBtn.textContent='📋 ver ediciones';
+      hBtn.onclick=()=>showEditHistory('cortitos',id);
+      footer.querySelector('div').appendChild(hBtn);
+    }
+    // Update edited badge
+    const dateEl=btn.closest('.post-card').querySelector('.post-date');
+    if(!dateEl.querySelector('.post-edited-badge')){
+      dateEl.innerHTML+=('<span class="post-edited-badge"> · editado</span>');
+    }
+  }catch(e){alert('Error al guardar: '+e.message);btn.disabled=false;btn.textContent='✓ guardar';}
+}
+
+// ── AGRADEZCO ──
+async function loadAgradezco(){
+  setTodayDates();
+  if(!document.querySelector('#agr-author option[value="Anónimo"] + option'))await loadAgradezcoAuthors();
+  const list=document.getElementById('agradezco-list');
+  list.innerHTML='<div class="loading-state"><div class="spinner"></div>Cargando...</div>';
+  try{
+    const data=await supaFetch('/rest/v1/agradecimientos?select=*&order=created_at.desc');
+    if(!data||data.length===0){
+      list.innerHTML='<div class="empty-state"><div style="font-size:36px;margin-bottom:16px;opacity:0.7">🙏</div>Sin agradecimientos todavía.</div>';
+      return;
+    }
+    list.innerHTML='';
+    data.forEach((p,i)=>renderAgradecimiento(p,i,list));
+  }catch(e){list.innerHTML='<div class="empty-state">Error al cargar.</div>';}
+}
+
+function renderAgradecimiento(p,i,container){
+  const card=document.createElement('div');
+  card.className='post-card';card.style.animationDelay=(i*0.05)+'s';
+  card.dataset.id=p.id;
+  const date=p.post_date?formatFullDate(p.post_date):timeAgo(p.created_at);
+  const editedAt=p.updated_at&&p.updated_at!==p.created_at?'<span class="post-edited-badge">· editado</span>':'';
+  const recipients=p.recipients?JSON.parse(p.recipients):[];
+  const recipientsHtml=recipients.length?
+    '<div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:6px;"><span style="font-size:12px;color:var(--text-muted);margin-right:4px;">Para:</span>'+
+    recipients.map(r=>'<span class="recipients-tag">'+r+'</span>').join('')+'</div>':'';
+  card.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'+
+      '<div><div class="post-author">'+(p.author||'Anónimo')+' agradece</div><div class="post-date">'+date+' '+editedAt+'</div></div>'+
+      '<div style="font-size:24px;">🙏</div>'+
+    '</div>'+
+    recipientsHtml+
+    '<div class="post-text" id="agr-text-'+p.id+'">'+escapeHtml(p.text)+'</div>'+
+    '<div class="post-footer">'+
+      '<div style="display:flex;gap:6px;">'+
+        '<button class="post-btn" onclick="startEditAgr('+p.id+',this)">✏️ editar</button>'+
+        (p.updated_at&&p.updated_at!==p.created_at?'<button class="post-btn" onclick="showEditHistory('agradecimientos','+p.id+')">📋 ver ediciones</button>':'')+
+      '</div>'+
+    '</div>';
+  container.appendChild(card);
+}
+
+async function createAgradecimiento(){
+  const author=document.getElementById('agr-author').value;
+  const text=document.getElementById('agr-text').value.trim();
+  const date=document.getElementById('agr-date').value;
+  const errEl=document.getElementById('err-agr');
+  const okEl=document.getElementById('ok-agr');
+  const btn=document.getElementById('btn-agr');
+  errEl.classList.remove('show');okEl.classList.remove('show');
+  if(!author||!text){errEl.textContent='Elegí tu nombre y escribí tu agradecimiento.';errEl.classList.add('show');return;}
+  btn.disabled=true;btn.textContent='Publicando...';
+  try{
+    await supaFetch('/rest/v1/agradecimientos',{method:'POST',prefer:'return=minimal',body:JSON.stringify({
+      author:author==='Anónimo'?null:author,
+      text,
+      post_date:date||null,
+      recipients:selectedRecipients.length?JSON.stringify(selectedRecipients):null
+    })});
+    document.getElementById('agr-text').value='';
+    document.getElementById('agr-counter').textContent='0 / 5000';
+    selectedRecipients=[];
+    updateRecipientsDisplay();
+    okEl.classList.add('show');
+    await loadAgradezco();
+  }catch(e){errEl.textContent='Error: '+e.message;errEl.classList.add('show');}
+  finally{btn.disabled=false;btn.textContent='✦ Agradecer';}
+}
+
+function startEditAgr(id,btn){
+  const textEl=document.getElementById('agr-text-'+id);
+  if(btn.textContent.includes('editar')){
+    const currentText=textEl.textContent;
+    textEl.innerHTML='<textarea style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.4);border-radius:10px;color:white;font-family:DM Sans,sans-serif;font-size:15px;line-height:1.7;padding:10px 12px;resize:vertical;min-height:100px;outline:none;" id="agr-edit-area-'+id+'">'+currentText+'</textarea>';
+    btn.textContent='✓ guardar';
+  } else {
+    const newText=document.getElementById('agr-edit-area-'+id).value.trim();
+    if(!newText)return;
+    saveAgr(id,newText,btn,textEl);
+  }
+}
+
+async function saveAgr(id,text,btn,textEl){
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    const orig=await supaFetch('/rest/v1/agradecimientos?select=text&id=eq.'+id);
+    if(orig&&orig[0]){
+      await supaFetch('/rest/v1/agradecimientos_history',{method:'POST',prefer:'return=minimal',body:JSON.stringify({agradecimiento_id:id,text:orig[0].text})});
+    }
+    await supaFetch('/rest/v1/agradecimientos?id=eq.'+id,{method:'PATCH',prefer:'return=minimal',body:JSON.stringify({text,updated_at:new Date().toISOString()})});
+    textEl.textContent=text;
+    btn.textContent='✏️ editar';btn.disabled=false;
+    const footer=btn.closest('.post-footer');
+    if(!footer.querySelector('[data-hist]')){
+      const hBtn=document.createElement('button');hBtn.className='post-btn';hBtn.dataset.hist='1';
+      hBtn.textContent='📋 ver ediciones';hBtn.onclick=()=>showEditHistory('agradecimientos',id);
+      footer.querySelector('div').appendChild(hBtn);
+    }
+    const dateEl=btn.closest('.post-card').querySelector('.post-date');
+    if(!dateEl.querySelector('.post-edited-badge'))dateEl.innerHTML+='<span class="post-edited-badge"> · editado</span>';
+  }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='✓ guardar';}
+}
+
+// ── EDIT HISTORY MODAL ──
+function closeHistoryModal(){
+  document.getElementById('history-modal').classList.remove('open');
+}
+document.getElementById('history-modal').addEventListener('click',function(e){if(e.target===this)closeHistoryModal();});
+
+async function showEditHistory(table,id){
+  const modal=document.getElementById('history-modal');
+  const content=document.getElementById('history-modal-content');
+  document.getElementById('history-modal-title').textContent='Historial de ediciones';
+  content.innerHTML='<div class="loading-state"><div class="spinner"></div></div>';
+  modal.classList.add('open');
+  try{
+    const histTable=table==='cortitos'?'cortitos_history':'agradecimientos_history';
+    const idField=table==='cortitos'?'cortito_id':'agradecimiento_id';
+    const data=await supaFetch('/rest/v1/'+histTable+'?select=*&'+idField+'=eq.'+id+'&order=created_at.desc');
+    if(!data||data.length===0){
+      content.innerHTML='<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:24px;">Sin ediciones registradas todavía.</div>';
+      return;
+    }
+    content.innerHTML='';
+    data.forEach((h,i)=>{
+      const div=document.createElement('div');div.className='history-entry';
+      const date=new Date(h.created_at);
+      const dateStr=date.getDate()+' de '+MONTHS_NAMES[date.getMonth()]+' '+date.getFullYear()+' '+String(date.getHours()).padStart(2,'0')+':'+String(date.getMinutes()).padStart(2,'0');
+      div.innerHTML='<div class="history-entry-meta">Versión '+(data.length-i)+' · '+dateStr+'</div><div class="history-entry-text">'+escapeHtml(h.text)+'</div>';
+      content.appendChild(div);
+    });
+  }catch(e){content.innerHTML='<div style="color:var(--text-muted);font-size:14px;">Error al cargar el historial.</div>';}
+}
+
+function escapeHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // INIT
 document.getElementById('inp-avatar').addEventListener('change',function(){

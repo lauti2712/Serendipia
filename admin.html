@@ -97,6 +97,8 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
       <button class="tab-btn active" onclick="showTab('community')">📸 Fotos comunidad</button>
       <button class="tab-btn" onclick="showTab('albums')">🎞️ Fotos de álbumes</button>
       <button class="tab-btn" onclick="showTab('postits')">🗒️ Post-its</button>
+      <button class="tab-btn" onclick="showTab('cortitos')">📣 Cortitos</button>
+      <button class="tab-btn" onclick="showTab('agradezco')">🙏 Agradezco</button>
     </div>
 
     <!-- COMMUNITY PHOTOS -->
@@ -139,6 +141,25 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
       <div id="postits-admin-list" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
+
+    <!-- CORTITOS ADMIN -->
+    <div class="tab-section" id="tab-cortitos">
+      <div class="sec-header">
+        <div><h3>Cortitos e importantes</h3><div class="count-tag" id="cortitos-admin-count"></div></div>
+        <button class="delete-all-btn" onclick="deleteAllCortitos()">✕ Eliminar todos</button>
+      </div>
+      <div id="cortitos-admin-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- AGRADEZCO ADMIN -->
+    <div class="tab-section" id="tab-agradezco">
+      <div class="sec-header">
+        <div><h3>Agradecimientos</h3><div class="count-tag" id="agr-admin-count"></div></div>
+        <button class="delete-all-btn" onclick="deleteAllAgr()">✕ Eliminar todos</button>
+      </div>
+      <div id="agr-admin-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
   </div>
 
 <script>
@@ -173,10 +194,12 @@ function showTab(name){
   document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  document.querySelectorAll('.tab-btn')[['community','albums','postits'].indexOf(name)].classList.add('active');
+  document.querySelectorAll('.tab-btn')[['community','albums','postits','cortitos','agradezco'].indexOf(name)].classList.add('active');
   if(name==='community')loadCommunityPhotos();
   if(name==='albums')loadAlbumPhotos();
   if(name==='postits')loadPostitsAdmin();
+  if(name==='cortitos')loadCortitoAdmin();
+  if(name==='agradezco')loadAgrAdmin();
 }
 
 // FORMAT DATE
@@ -292,6 +315,94 @@ async function deleteAllAlbumPhotos(){
   }catch(e){alert('Error: '+e.message);}
 }
 
+
+
+async function loadCortitoAdmin(){
+  const list=document.getElementById('cortitos-admin-list');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>Cargando...</div>';
+  try{
+    const data=await supa('/rest/v1/cortitos?select=*&order=created_at.desc');
+    document.getElementById('cortitos-admin-count').textContent=(data?data.length:0)+' publicaciones';
+    if(!data||data.length===0){list.innerHTML='<div class="empty">Sin cortitos todavía.</div>';return;}
+    list.innerHTML='';
+    data.forEach(p=>{
+      const div=document.createElement('div');
+      div.style.cssText='background:rgba(60,18,100,0.6);border:1px solid rgba(200,160,255,0.25);border-radius:14px;padding:16px 20px;';
+      const date=p.post_date?p.post_date:fmtDate(p.created_at);
+      div.innerHTML=
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'+
+          '<div><div style="font-size:13px;font-weight:500;color:#C97EFF;">'+p.author+'</div><div style="font-size:11px;color:rgba(220,200,255,0.6);">'+date+'</div></div>'+
+          '<button onclick="deleteCortito('+p.id+',this)" style="background:rgba(200,20,60,0.2);border:1px solid rgba(200,20,60,0.3);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:#c00;white-space:nowrap;">✕ Eliminar</button>'+
+        '</div>'+
+        '<div style="font-size:14px;color:rgba(255,255,255,0.85);margin-top:10px;line-height:1.65;white-space:pre-wrap;">'+p.text+'</div>';
+      list.appendChild(div);
+    });
+  }catch(e){list.innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function deleteCortito(id,btn){
+  if(!confirm('¿Eliminar este cortito permanentemente?'))return;
+  btn.disabled=true;btn.textContent='...';
+  try{
+    await fetch(SUPA_URL+'/rest/v1/cortitos_history?cortito_id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    await fetch(SUPA_URL+'/rest/v1/cortitos?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    btn.closest('div[style*="border-radius:14px"]').remove();
+  }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='✕ Eliminar';}
+}
+
+async function deleteAllCortitos(){
+  if(!confirm('¿Eliminar TODOS los cortitos?'))return;
+  try{
+    await fetch(SUPA_URL+'/rest/v1/cortitos_history',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    await fetch(SUPA_URL+'/rest/v1/cortitos',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    loadCortitoAdmin();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function loadAgrAdmin(){
+  const list=document.getElementById('agr-admin-list');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>Cargando...</div>';
+  try{
+    const data=await supa('/rest/v1/agradecimientos?select=*&order=created_at.desc');
+    document.getElementById('agr-admin-count').textContent=(data?data.length:0)+' agradecimientos';
+    if(!data||data.length===0){list.innerHTML='<div class="empty">Sin agradecimientos todavía.</div>';return;}
+    list.innerHTML='';
+    data.forEach(p=>{
+      const div=document.createElement('div');
+      div.style.cssText='background:rgba(60,18,100,0.6);border:1px solid rgba(200,160,255,0.25);border-radius:14px;padding:16px 20px;';
+      const recipients=p.recipients?JSON.parse(p.recipients):[];
+      div.innerHTML=
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">'+
+          '<div>'+
+            '<div style="font-size:13px;font-weight:500;color:#C97EFF;">'+(p.author||'Anónimo')+' agradece</div>'+
+            (recipients.length?'<div style="font-size:11px;color:rgba(220,200,255,0.6);margin-top:2px;">Para: '+recipients.join(', ')+'</div>':'')+
+          '</div>'+
+          '<button onclick="deleteAgr('+p.id+',this)" style="background:rgba(200,20,60,0.2);border:1px solid rgba(200,20,60,0.3);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:#c00;white-space:nowrap;">✕ Eliminar</button>'+
+        '</div>'+
+        '<div style="font-size:14px;color:rgba(255,255,255,0.85);margin-top:10px;line-height:1.65;white-space:pre-wrap;">'+p.text+'</div>';
+      list.appendChild(div);
+    });
+  }catch(e){list.innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function deleteAgr(id,btn){
+  if(!confirm('¿Eliminar este agradecimiento?'))return;
+  btn.disabled=true;btn.textContent='...';
+  try{
+    await fetch(SUPA_URL+'/rest/v1/agradecimientos_history?agradecimiento_id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    await fetch(SUPA_URL+'/rest/v1/agradecimientos?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    btn.closest('div[style*="border-radius:14px"]').remove();
+  }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='✕ Eliminar';}
+}
+
+async function deleteAllAgr(){
+  if(!confirm('¿Eliminar TODOS los agradecimientos?'))return;
+  try{
+    await fetch(SUPA_URL+'/rest/v1/agradecimientos_history',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    await fetch(SUPA_URL+'/rest/v1/agradecimientos',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    loadAgrAdmin();
+  }catch(e){alert('Error: '+e.message);}
+}
 
 async function loadPostitsAdmin(){
   const list=document.getElementById('postits-admin-list');
