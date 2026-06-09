@@ -346,7 +346,7 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
     <button class="nav-btn" onclick="showSection('foro')">💬 Foro</button>
     <button class="nav-btn" onclick="showSection('eventos')">📅 Eventos</button>
     <button class="nav-btn" onclick="showSection('cortitos')">📣 Cortitos</button>
-    <button class="nav-btn" onclick="showSection('agradezco')">🙏 Agradezco</button>
+    <button class="nav-btn" onclick="showSection('agradezco')">🙏 Agradecimientos</button>
   </nav>
 
   <div id="app">
@@ -666,7 +666,7 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
       <div style="height:80px;"></div>
       <div style="max-width:720px;margin:0 auto;padding:0 24px;">
         <span class="section-label">✦ gratitud de la comunidad</span>
-        <h2 class="section-heading">Agradezco</h2>
+        <h2 class="section-heading">Agradecimientos</h2>
         <div class="glass-card">
           <div class="form-grid">
             <div class="field">
@@ -682,13 +682,21 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
             </div>
           </div>
           <div class="field" style="margin-bottom:20px;">
-            <label>Dirigido a (podés elegir varios)</label>
+            <label>Dirigido a (elegí personas y/o escribí libremente)</label>
             <div id="agr-recipients-wrap" style="background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.3);border-radius:12px;padding:10px 12px;min-height:46px;cursor:pointer;" onclick="toggleRecipientsDropdown()">
               <div id="agr-recipients-selected" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
                 <span style="color:rgba(200,160,255,0.4);font-size:15px;">Elegí una o más personas...</span>
               </div>
             </div>
-            <div id="agr-recipients-dropdown" style="display:none;background:#3D1264;border:1px solid rgba(200,160,255,0.3);border-radius:12px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:20;position:relative;">
+            <div id="agr-recipients-dropdown" style="display:none;background:#3D1264;border:1px solid rgba(200,160,255,0.3);border-radius:12px;margin-top:4px;z-index:20;position:relative;">
+              <div style="padding:10px 12px;border-bottom:1px solid rgba(200,160,255,0.15);">
+                <input type="text" id="agr-custom-recipient" placeholder="O escribí libremente: a todos, a la vida..." maxlength="60"
+                  style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.2);border-radius:8px;color:white;font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;"
+                  onclick="event.stopPropagation()"/>
+                <button onclick="event.stopPropagation();addCustomRecipient()" style="margin-top:6px;width:100%;padding:7px;background:rgba(200,160,255,0.15);border:1px solid rgba(200,160,255,0.3);border-radius:8px;color:var(--accent);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Agregar</button>
+              </div>
+              <div id="agr-recipients-dropdown-list" style="max-height:180px;overflow-y:auto;">
+              </div>
             </div>
           </div>
           <div class="field" style="margin-bottom:20px;">
@@ -1711,7 +1719,9 @@ async function loadAgradezcoAuthors(){
         item.dataset.name=b.name;
         item.textContent=b.name;
         item.onclick=()=>toggleRecipient(b.name,item);
-        drop.appendChild(item);
+        const dropList=document.getElementById('agr-recipients-dropdown-list');
+        if(dropList)dropList.appendChild(item);
+        else drop.appendChild(item);
       });
     }
   }catch(e){console.error('agr authors error',e);}
@@ -1752,6 +1762,17 @@ function updateRecipientsDisplay(){
   });
 }
 
+function addCustomRecipient(){
+  const input=document.getElementById('agr-custom-recipient');
+  const val=input.value.trim();
+  if(!val)return;
+  if(!selectedRecipients.includes(val)){
+    selectedRecipients.push(val);
+    updateRecipientsDisplay();
+  }
+  input.value='';
+}
+
 // Close dropdown on outside click
 document.addEventListener('click',e=>{
   if(!e.target.closest('#agr-recipients-wrap')&&!e.target.closest('#agr-recipients-dropdown')){
@@ -1770,6 +1791,13 @@ document.getElementById('agr-text').addEventListener('input',function(){
   const c=document.getElementById('agr-counter');
   c.textContent=this.value.length+' / 5000';
   c.className=this.value.length>4500?'char-counter-warn':'';
+});
+
+// Enter on custom recipient
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.activeElement.id==='agr-custom-recipient'){
+    e.preventDefault();addCustomRecipient();
+  }
 });
 
 // Set today's date on load
