@@ -141,6 +141,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:
 .history-entry-meta{font-size:11px;color:var(--text-muted);margin-bottom:8px;}
 .history-entry-text{font-size:14px;color:var(--text-on-purple);line-height:1.65;white-space:pre-wrap;word-break:break-word;}
 .char-counter-warn{color:var(--accent2)!important;}
+#fab-beer:hover{background:rgba(255,200,50,0.2)!important;border-color:rgba(255,200,50,0.5)!important;transform:scale(1.1);}
 
 /* EVENTOS */
 .evento-card{background:var(--card-bg);backdrop-filter:blur(16px);border:1px solid var(--card-border);border-radius:18px;padding:20px 24px;margin-bottom:12px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;animation:fadeUp 0.35s ease both;}
@@ -305,6 +306,13 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
 <!-- FLOATING POSTITS -->
 <!-- FAB BUTTONS -->
 <div style="position:fixed;bottom:28px;right:28px;z-index:60;display:flex;flex-direction:column;align-items:center;gap:10px;">
+  <!-- Beer button -->
+  <a id="fab-beer" href="#" target="_blank" rel="noopener"
+    style="width:48px;height:48px;border-radius:50%;border:1px solid rgba(200,160,255,0.3);background:rgba(60,18,100,0.7);color:white;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.18s;backdrop-filter:blur(8px);text-decoration:none;display:none;"
+    title="Invitanos una cerveza">
+    🍺
+  </a>
+
   <!-- Color picker -->
   <div id="color-picker-wrap" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
     <div id="color-swatches" style="display:none;flex-direction:column;gap:6px;align-items:center;background:rgba(30,10,60,0.9);border:1px solid rgba(200,160,255,0.3);border-radius:16px;padding:12px 10px;backdrop-filter:blur(12px);">
@@ -1672,6 +1680,17 @@ async function deletePostitFromHistory(id,btn){
     const el=document.querySelector('.postit[data-id="'+id+'"]');
     if(el){el.style.opacity='0';setTimeout(()=>el.remove(),200);}
   }catch(e){alert('Error al borrar.');btn.disabled=false;btn.textContent='✕ borrar';}
+}
+
+async function loadBeerUrl(){
+  try{
+    const data=await supaFetch('/rest/v1/settings?select=*&key=eq.beer_url&limit=1');
+    if(data&&data.length>0&&data[0].value){
+      const btn=document.getElementById('fab-beer');
+      btn.href=data[0].value;
+      btn.style.display='flex';
+    }
+  }catch(e){console.error('beer url error',e);}
 }
 
 async function restorePostit(id,btn){
