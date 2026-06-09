@@ -93,6 +93,23 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
 <!-- ADMIN -->
 <div id="admin-content">
   <div class="container">
+
+    <!-- BEER URL SETTING -->
+    <div style="background:rgba(60,18,100,0.6);border:1px solid rgba(200,160,255,0.25);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div style="font-size:22px;">🍺</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:13px;font-weight:500;color:#C97EFF;margin-bottom:6px;">URL del botón de cerveza</div>
+        <div style="font-size:12px;color:rgba(200,160,255,0.6);margin-bottom:10px;">El botón 🍺 aparece en el sitio solo si hay una URL guardada.</div>
+        <div style="display:flex;gap:8px;">
+          <input type="url" id="beer-url-input" placeholder="https://cafecito.app/tuusuario" 
+            style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.3);border-radius:10px;color:white;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;"/>
+          <button onclick="saveBeerUrl()" style="padding:10px 18px;background:#C97EFF;color:#3D1264;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;">Guardar</button>
+          <button onclick="clearBeerUrl()" style="padding:10px 14px;background:rgba(200,160,255,0.1);border:1px solid rgba(200,160,255,0.3);color:rgba(200,160,255,0.7);border-radius:10px;font-size:13px;cursor:pointer;white-space:nowrap;">Quitar</button>
+        </div>
+        <div id="beer-url-msg" style="font-size:12px;margin-top:8px;display:none;"></div>
+      </div>
+    </div>
+
     <div class="tabs">
       <button class="tab-btn active" onclick="showTab('community')">📸 Fotos comunidad</button>
       <button class="tab-btn" onclick="showTab('albums')">🎞️ Fotos de álbumes</button>
@@ -183,6 +200,7 @@ function checkLogin(){
     document.getElementById('login-screen').style.display='none';
     document.getElementById('admin-content').style.display='block';
     loadCommunityPhotos();
+    loadBeerUrlAdmin();
   } else {
     document.getElementById('login-error').classList.add('show');
     document.getElementById('pwd-input').value='';
@@ -482,6 +500,42 @@ async function toggleHide(id, currentlyHidden, btn, type){
     btn.textContent=currentlyHidden?'👁 Mostrar':'🙈 Ocultar';
   }
 }
+// ── BEER URL ──
+async function loadBeerUrlAdmin(){
+  try{
+    const data=await supa('/rest/v1/settings?select=*&key=eq.beer_url&limit=1');
+    if(data&&data.length>0&&data[0].value){
+      document.getElementById('beer-url-input').value=data[0].value;
+    }
+  }catch(e){console.error('beer load error',e);}
+}
+
+async function saveBeerUrl(){
+  const url=document.getElementById('beer-url-input').value.trim();
+  const msg=document.getElementById('beer-url-msg');
+  if(!url){msg.textContent='Ingresá una URL válida.';msg.style.color='#ffaac0';msg.style.display='block';return;}
+  try{
+    await fetch(SUPA_URL+'/rest/v1/settings?key=eq.beer_url',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    await fetch(SUPA_URL+'/rest/v1/settings',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({key:'beer_url',value:url})});
+    msg.textContent='✓ URL guardada. El botón 🍺 ya aparece en el sitio.';msg.style.color='#80ffb0';msg.style.display='block';
+  }catch(e){msg.textContent='Error: '+e.message;msg.style.color='#ffaac0';msg.style.display='block';}
+}
+
+async function clearBeerUrl(){
+  const msg=document.getElementById('beer-url-msg');
+  try{
+    await fetch(SUPA_URL+'/rest/v1/settings?key=eq.beer_url',{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
+    document.getElementById('beer-url-input').value='';
+    msg.textContent='✓ Botón de cerveza desactivado.';msg.style.color='#80ffb0';msg.style.display='block';
+  }catch(e){msg.textContent='Error: '+e.message;msg.style.color='#ffaac0';msg.style.display='block';}
+}
+
+// Load beer URL on admin init
+(function(){
+  const orig=checkLogin;
+  // Patch to also load beer url after login
+})();
+
 </script>
 </body>
 </html>
