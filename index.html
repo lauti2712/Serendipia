@@ -348,7 +348,7 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
     <button class="nav-btn" onclick="showSection('eventos')">📅 Eventos</button>
     <button class="nav-btn" onclick="showSection('cortitos')">📣 Cortitos</button>
     <button class="nav-btn" onclick="showSection('agradezco')">🙏 Agradecimientos</button>
-    <a id="nav-beer" href="#" target="_blank" rel="noopener" class="nav-btn" style="display:none;background:rgba(255,200,50,0.15);border-color:rgba(255,200,50,0.4);color:#FFD166;text-decoration:none;">🍺 Entrar al bar</a>
+    <a id="nav-beer" href="#" target="_blank" rel="noopener" class="nav-btn" style="background:rgba(255,200,50,0.15);border-color:rgba(255,200,50,0.4);color:#FFD166;text-decoration:none;">🍺 Entrar al bar</a>
   </nav>
 
   <div id="app">
@@ -1677,16 +1677,22 @@ async function deletePostitFromHistory(id,btn){
 }
 
 async function loadBeerUrl(){
+  const btn=document.getElementById('nav-beer');
+  if(!btn)return;
   try{
     const data=await supaFetch('/rest/v1/settings?select=*&key=eq.beer_url&limit=1');
-    const btn=document.getElementById('nav-beer');
-    if(data&&data.length>0&&data[0].value&&btn){
+    if(data&&data.length>0&&data[0].value){
       btn.href=data[0].value;
-      btn.style.display='inline-flex';
-    } else if(btn){
-      btn.style.display='none';
+      btn.title='Entrar al bar';
+      btn.onclick=null;
+    } else {
+      btn.href='#';
+      btn.onclick=function(e){e.preventDefault();alert('Sin link por ahora, coordiná en el grupo 🍺');};
     }
-  }catch(e){console.error('beer url error',e);}
+  }catch(e){
+    btn.href='#';
+    btn.onclick=function(e){e.preventDefault();alert('Sin link por ahora, coordiná en el grupo 🍺');};
+  }
 }
 
 async function restorePostit(id,btn){
