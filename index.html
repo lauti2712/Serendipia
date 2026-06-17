@@ -1710,6 +1710,8 @@ async function loadCortitosAuthors(){
   try{
     const data=await supaFetch('/rest/v1/birthdays?select=id,name&order=name.asc');
     const sel=document.getElementById('cort-author');
+    // Clear existing options except the first placeholder
+    while(sel.options.length>1)sel.remove(1);
     if(data&&data.length){
       data.forEach(b=>{
         const opt=document.createElement('option');
@@ -1829,7 +1831,7 @@ function setTodayDates(){
 
 async function loadCortitos(){
   setTodayDates();
-  if(!document.querySelector('#cort-author option[value]'))await loadCortitosAuthors();
+  await loadCortitosAuthors();
   const list=document.getElementById('cortitos-list');
   list.innerHTML='<div class="loading-state"><div class="spinner"></div>Cargando...</div>';
   try{
@@ -1946,7 +1948,7 @@ async function saveCortito(id,text,btn,textEl){
 // ── AGRADEZCO ──
 async function loadAgradezco(){
   setTodayDates();
-  if(!document.querySelector('#agr-author option[value="Anónimo"] + option'))await loadAgradezcoAuthors();
+  await loadAgradezcoAuthors();
   const list=document.getElementById('agradezco-list');
   list.innerHTML='<div class="loading-state"><div class="spinner"></div>Cargando...</div>';
   try{
