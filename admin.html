@@ -364,7 +364,7 @@ async function deleteCortito(id,btn){
   try{
     await fetch(SUPA_URL+'/rest/v1/cortitos_history?cortito_id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
     await fetch(SUPA_URL+'/rest/v1/cortitos?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
-    btn.closest('div[style*="border-radius:14px"]').remove();
+    await loadCortitoAdmin();
   }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='✕ Eliminar';}
 }
 
@@ -409,7 +409,7 @@ async function deleteAgr(id,btn){
   try{
     await fetch(SUPA_URL+'/rest/v1/agradecimientos_history?agradecimiento_id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
     await fetch(SUPA_URL+'/rest/v1/agradecimientos?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=minimal'}});
-    btn.closest('div[style*="border-radius:14px"]').remove();
+    await loadAgrAdmin();
   }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='✕ Eliminar';}
 }
 
