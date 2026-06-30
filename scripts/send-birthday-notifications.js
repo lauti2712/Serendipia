@@ -33,7 +33,7 @@ const SUPABASE_URL = 'https://cmjiinrsmfxnqbefzttd.supabase.co';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const FROM_EMAIL = `${FROM_NAME} <onboarding@resend.dev>`; // cambiar el dominio si verificás uno propio en Resend
+const FROM_EMAIL = `weareSerendipia <avisos@vesuviopizzeria.ar>`; // cambiar el dominio si verificás uno propio en Resend
 
 if (!SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
   console.error('Faltan variables de entorno SUPABASE_SERVICE_KEY o RESEND_API_KEY');
