@@ -1,0 +1,25 @@
+name: Avisos de cumpleaños
+
+on:
+  schedule:
+    # Corre todos los días a las 09:00 hora Argentina (UTC-3) = 12:00 UTC
+    - cron: '0 12 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enviar notificaciones de cumpleaños
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: node scripts/send-birthday-notifications.js
