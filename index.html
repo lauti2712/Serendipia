@@ -513,7 +513,7 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
         <h2 class="section-heading">Fotos de todos</h2>
         <div class="glass-card">
           <div class="form-grid">
-            <div class="field"><label>Tu nombre</label><input type="text" id="comm-name" placeholder="Tu nombre" maxlength="40" autocomplete="off"/></div>
+            <div class="field"><label>Quiénes están</label><input type="text" id="comm-name" placeholder="¿Quiénes están en la foto?" maxlength="40" autocomplete="off"/></div>
             <div class="field"><label>Descripción (opcional)</label><input type="text" id="comm-caption" placeholder="Un momento especial..." maxlength="80"/></div>
           </div>
           <div class="form-grid">
@@ -574,8 +574,12 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
           <h2 class="section-heading" id="detail-title"></h2>
           <p style="color:var(--text-muted);font-size:14px;margin-bottom:40px;margin-top:-28px;" id="detail-desc"></p>
           <div class="form-grid" style="margin-bottom:16px;">
+            <div class="field"><label>Quiénes están</label><input type="text" id="detail-people" placeholder="¿Quiénes están en la foto?" maxlength="40" autocomplete="off"/></div>
             <div class="field"><label>Descripción (opcional)</label><input type="text" id="detail-caption" placeholder="¿Qué momento es este?" maxlength="100"/></div>
+          </div>
+          <div class="form-grid" style="margin-bottom:16px;">
             <div class="field"><label>Fecha (opcional)</label><input type="date" id="detail-date"/></div>
+            <div class="field"></div>
           </div>
           <div class="field" style="margin-bottom:20px;">
             <label>Fotos</label>
@@ -1033,7 +1037,12 @@ function renderCommunityCollage(photos){
   if(visible.length===0){wrap.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div style="font-size:36px;margin-bottom:16px;opacity:0.7">📸</div>Sin fotos todavía.</div>';return;}
   visible=sortByPhotoDate(visible);
   wrap.innerHTML='';
-  const galleryDataComm=visible.map(p=>({url:p.photo_url,caption:p.caption||''}));
+  const galleryDataComm=visible.map(p=>{
+    const meta=[];
+    if(p.uploaded_by)meta.push(p.uploaded_by);
+    if(p.photo_date){const[py,pm,pd]=p.photo_date.split('-');meta.push((+pd)+' de '+MONTHS_NAMES[+pm-1]+' '+py);}
+    return {url:p.photo_url,caption:p.caption||'',meta:meta.join(' · ')};
+  });
   visible.forEach((p,i)=>{
     const div=document.createElement('div');div.className='polaroid';div.style.cssText='transform:rotate('+randomRot()+');animation-delay:'+(i*0.06)+'s';
     div.onclick=()=>openGallery(galleryDataComm,i);
@@ -1126,13 +1135,21 @@ function renderDetailCollage(photos){
   if(visible.length===0){wrap.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div style="font-size:36px;margin-bottom:16px;opacity:0.7">📸</div>Sin fotos todavía.</div>';return;}
   visible=sortByPhotoDate(visible);
   wrap.innerHTML='';
-  const galleryDataAlb=visible.map(p=>({url:p.photo_url,caption:p.caption||''}));
+  const galleryDataAlb=visible.map(p=>{
+    const meta=[];
+    if(p.uploaded_by)meta.push(p.uploaded_by);
+    if(p.photo_date){const[py,pm,pd]=p.photo_date.split('-');meta.push((+pd)+' de '+MONTHS_NAMES[+pm-1]+' '+py);}
+    return {url:p.photo_url,caption:p.caption||'',meta:meta.join(' · ')};
+  });
   visible.forEach((p,i)=>{
     const div=document.createElement('div');div.className='polaroid';div.style.cssText='transform:rotate('+randomRot()+');animation-delay:'+(i*0.06)+'s';
     div.onclick=()=>openGallery(galleryDataAlb,i);
     const img=document.createElement('img');img.src=p.photo_url;img.alt='';div.appendChild(img);
     if(p.caption){const cap=document.createElement('div');cap.className='polaroid-caption';cap.textContent=p.caption;div.appendChild(cap);}
-    if(p.photo_date){const[py,pm,pd]=p.photo_date.split('-');const dateDiv=document.createElement('div');dateDiv.className='polaroid-date';dateDiv.textContent=(+pd)+' de '+MONTHS_NAMES[+pm-1]+' '+py;div.appendChild(dateDiv);}
+    const metaParts=[];
+    if(p.uploaded_by)metaParts.push(p.uploaded_by);
+    if(p.photo_date){const[py,pm,pd]=p.photo_date.split('-');metaParts.push((+pd)+' de '+MONTHS_NAMES[+pm-1]+' '+py);}
+    if(metaParts.length){const dateDiv=document.createElement('div');dateDiv.className='polaroid-date';dateDiv.textContent=metaParts.join(' · ');div.appendChild(dateDiv);}
     wrap.appendChild(div);
   });
 }
@@ -1162,19 +1179,21 @@ async function deleteAlbum(){
 async function uploadToAlbum(){
   if(!currentAlbumId)return;
   const photosEl=document.getElementById('detail-photos');
+  const peopleEl=document.getElementById('detail-people');
   const captionEl=document.getElementById('detail-caption');
   const dateEl=document.getElementById('detail-date');
   const btn=document.getElementById('btn-detail-upload');
   if(!photosEl.files.length)return;
   btn.disabled=true;btn.textContent='Subiendo...';
   try{
+    const uploaded_by=peopleEl.value.trim()||null;
     const caption=captionEl.value.trim()||null;
     const photo_date=dateEl.value||null;
     for(const f of Array.from(photosEl.files)){
       const url=await uploadFile(f,'albums/'+currentAlbumId);
-      await supaFetch('/rest/v1/album',{method:'POST',prefer:'return=minimal',body:JSON.stringify({photo_url:url,album_id:currentAlbumId,caption,photo_date})});
+      await supaFetch('/rest/v1/album',{method:'POST',prefer:'return=minimal',body:JSON.stringify({photo_url:url,album_id:currentAlbumId,uploaded_by,caption,photo_date})});
     }
-    photosEl.value='';captionEl.value='';dateEl.value='';
+    photosEl.value='';peopleEl.value='';captionEl.value='';dateEl.value='';
     document.getElementById('detail-preview').innerHTML='';
     await openAlbum(currentAlbumId);
   }catch(e){alert('Error: '+e.message);}
@@ -1198,7 +1217,20 @@ function renderLightboxItem(){
   const item=galleryItems[galleryIndex];
   if(!item)return;
   document.getElementById('lightbox-img').src=item.url;
-  document.getElementById('lightbox-caption').textContent=item.caption||'';
+  const capEl=document.getElementById('lightbox-caption');
+  capEl.innerHTML='';
+  if(item.caption){
+    const capLine=document.createElement('div');
+    capLine.style.cssText='font-size:14px;';
+    capLine.textContent=item.caption;
+    capEl.appendChild(capLine);
+  }
+  if(item.meta){
+    const metaLine=document.createElement('div');
+    metaLine.style.cssText='font-size:12px;opacity:0.65;margin-top:4px;letter-spacing:0.03em;';
+    metaLine.textContent=item.meta;
+    capEl.appendChild(metaLine);
+  }
   const counter=document.getElementById('lightbox-counter');
   const prevBtn=document.getElementById('lightbox-prev');
   const nextBtn=document.getElementById('lightbox-next');
