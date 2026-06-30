@@ -1,11 +1,39 @@
 // Script que corre diariamente vía GitHub Actions.
 // Revisa los cumpleaños de "hoy" y "mañana" y manda un email a todos los suscriptos.
 
+// ════════════════════════════════════════════════════════════
+// 🎨 PERSONALIZÁ ACÁ EL TEXTO DEL EMAIL
+// ════════════════════════════════════════════════════════════
+
+// Nombre que aparece como remitente
+const FROM_NAME = 'we are Serendipia';
+
+// Asunto del mail cuando es HOY (puede usar {names} para los nombres)
+const SUBJECT_TODAY_SINGLE = '🎂 ¡Hoy es el cumple de {names}!';
+const SUBJECT_TODAY_MULTI = '🎂 ¡Hoy cumplen años: {names}!';
+
+// Asunto del mail cuando es MAÑANA (solo si no hay cumpleaños hoy)
+const SUBJECT_TOMORROW_SINGLE = '📅 Mañana es el cumple de {names}';
+const SUBJECT_TOMORROW_MULTI = '📅 Mañana cumplen años: {names}';
+
+// Texto principal dentro del mail para HOY
+const BODY_TODAY = '🎉 <strong>¡Hoy es el cumpleaños de {names}!</strong> Mandale un mensajito, llamalo, o pasá a saludar 🎂';
+
+// Texto principal dentro del mail para MAÑANA
+const BODY_TOMORROW = '📅 Mañana es el cumpleaños de <strong>{names}</strong>. ¡No te olvides!';
+
+// Pie de página del mail
+const FOOTER_TEXT = 'Recibiste este correo porque te suscribiste a los avisos de cumpleaños en weareSerendipia, el mejor grupo serendipier.';
+
+// ════════════════════════════════════════════════════════════
+// A partir de acá es lógica del script, no hace falta tocarlo
+// ════════════════════════════════════════════════════════════
+
 const SUPABASE_URL = 'https://cmjiinrsmfxnqbefzttd.supabase.co';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const FROM_EMAIL = 'weareSerendipia <onboarding@resend.dev>'; // cambiar si tenés dominio verificado en Resend
+const FROM_EMAIL = `${FROM_NAME} <onboarding@resend.dev>`; // cambiar el dominio si verificás uno propio en Resend
 
 if (!SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
   console.error('Faltan variables de entorno SUPABASE_SERVICE_KEY o RESEND_API_KEY');
@@ -34,6 +62,10 @@ function parseMD(dateStr) {
   // birthdays.date format: '2000-MM-DD'
   const parts = dateStr.split('-').map(Number);
   return { m: parts[1], d: parts[2] };
+}
+
+function fill(template, names) {
+  return template.replace('{names}', names);
 }
 
 async function main() {
@@ -80,23 +112,23 @@ async function main() {
 
   if (todays.length > 0) {
     const names = todays.join(', ');
-    subject = todays.length === 1 ? `🎂 ¡Hoy es el cumpleaños de ${todays[0]}!` : `🎂 ¡Hoy cumplen años: ${names}!`;
-    bodyLines.push(`<p style="font-size:18px;">🎉 <strong>¡Hoy es el cumpleaños de ${names}!</strong></p>`);
+    subject = fill(todays.length === 1 ? SUBJECT_TODAY_SINGLE : SUBJECT_TODAY_MULTI, names);
+    bodyLines.push(`<p style="font-size:18px;">${fill(BODY_TODAY, names)}</p>`);
   }
 
   if (tomorrows.length > 0) {
     const names = tomorrows.join(', ');
     if (!subject) {
-      subject = tomorrows.length === 1 ? `📅 Mañana es el cumpleaños de ${tomorrows[0]}` : `📅 Mañana cumplen años: ${names}`;
+      subject = fill(tomorrows.length === 1 ? SUBJECT_TOMORROW_SINGLE : SUBJECT_TOMORROW_MULTI, names);
     }
-    bodyLines.push(`<p style="font-size:16px;">📅 Mañana es el cumpleaños de <strong>${names}</strong>.</p>`);
+    bodyLines.push(`<p style="font-size:16px;">${fill(BODY_TOMORROW, names)}</p>`);
   }
 
   const html = `
     <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #7B2FBE; border-radius: 16px; color: white;">
-      <div style="text-align:center; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; margin-bottom: 16px;">weareSerendipia</div>
+      <div style="text-align:center; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; margin-bottom: 16px;">${FROM_NAME}</div>
       ${bodyLines.join('\n')}
-      <p style="font-size: 13px; opacity: 0.7; margin-top: 24px;">Recibiste este correo porque te suscribiste a los avisos de cumpleaños en weareSerendipia.</p>
+      <p style="font-size: 13px; opacity: 0.7; margin-top: 24px;">${FOOTER_TEXT}</p>
     </div>
   `;
 
