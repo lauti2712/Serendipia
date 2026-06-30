@@ -467,7 +467,7 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
             <h3 style="font-family:'Playfair Display',serif;font-size:22px;color:white;font-weight:700;">Cumpleaños de la comunidad</h3>
           </div>
           <div style="display:flex;align-items:center;gap:12px;">
-            <button class="icon-btn" onclick="downloadAllBirthdaysICS()" data-tip="Descargar todos al calendario" style="width:auto;padding:0 14px;gap:6px;">
+            <button class="icon-btn" onclick="showICSExplainer()" data-tip="Agregar todos a tu calendario" style="width:auto;padding:0 14px;gap:6px;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
               <span style="font-size:12px;">Agregar todos al calendario</span>
             </button>
@@ -475,6 +475,33 @@ footer{border-top:1px solid rgba(200,160,255,0.12);text-align:center;padding:32p
           </div>
         </div>
         <div class="bday-list" id="bday-list"><div class="loading-state"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+
+      <!-- ICS EXPLAINER MODAL -->
+      <div class="modal-backdrop" id="ics-modal">
+        <div class="modal" style="max-width:460px;">
+          <button class="modal-close" onclick="closeICSModal()">✕</button>
+          <h3>📅 Agregar todos los cumpleaños</h3>
+          <p style="font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:20px;">
+            Se va a descargar un archivo <strong style="color:white;">.ics</strong> con los <span id="ics-count-text">cumpleaños</span> de la comunidad.
+            Este formato es <strong style="color:white;">universal</strong> — funciona con cualquier calendario:
+          </p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-on-purple);">
+              <span style="font-size:18px;">🟦</span>
+              <div><strong>Google Calendar:</strong> <span style="color:var(--text-muted);">Configuración → Importar y exportar → Importar (desde computadora)</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-on-purple);">
+              <span style="font-size:18px;">🍎</span>
+              <div><strong>iPhone / iCloud:</strong> <span style="color:var(--text-muted);">Tocá el archivo descargado y elegí "Agregar todos" en Calendario</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-on-purple);">
+              <span style="font-size:18px;">🟪</span>
+              <div><strong>Outlook:</strong> <span style="color:var(--text-muted);">Archivo → Abrir y exportar → Importar/Exportar</span></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="downloadAllBirthdaysICS();closeICSModal();">⬇ Descargar archivo .ics</button>
+        </div>
       </div>
     </div>
 
@@ -2233,6 +2260,14 @@ async function subscribeEmail(){
     }
   }
 }
+
+function showICSExplainer(){
+  document.getElementById('ics-modal').classList.add('open');
+}
+function closeICSModal(){
+  document.getElementById('ics-modal').classList.remove('open');
+}
+document.getElementById('ics-modal').addEventListener('click',function(e){if(e.target===this)closeICSModal();});
 
 // ── DOWNLOAD ALL BIRTHDAYS AS ICS ──
 async function downloadAllBirthdaysICS(){
