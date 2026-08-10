@@ -116,6 +116,7 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
       <button class="tab-btn" onclick="showTab('postits')">🗒️ Post-its</button>
       <button class="tab-btn" onclick="showTab('cortitos')">📣 Cortitos</button>
       <button class="tab-btn" onclick="showTab('agradezco')">🙏 Agradezco</button>
+      <button class="tab-btn" onclick="showTab('bios')">👤 Descripciones</button>
     </div>
 
     <!-- COMMUNITY PHOTOS -->
@@ -177,6 +178,18 @@ header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;co
       <div id="agr-admin-list" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
+
+    <!-- DESCRIPCIONES ADMIN -->
+    <div class="tab-section" id="tab-bios">
+      <div class="sec-header">
+        <div>
+          <h3>Descripciones de personas</h3>
+          <div class="count-tag">Se incluyen en el email de cumpleaños</div>
+        </div>
+      </div>
+      <div id="bios-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
   </div>
 
 <script>
@@ -212,12 +225,13 @@ function showTab(name){
   document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  document.querySelectorAll('.tab-btn')[['community','albums','postits','cortitos','agradezco'].indexOf(name)].classList.add('active');
+  document.querySelectorAll('.tab-btn')[['community','albums','postits','cortitos','agradezco','bios'].indexOf(name)].classList.add('active');
   if(name==='community')loadCommunityPhotos();
   if(name==='albums')loadAlbumPhotos();
   if(name==='postits')loadPostitsAdmin();
   if(name==='cortitos')loadCortitoAdmin();
   if(name==='agradezco')loadAgrAdmin();
+  if(name==='bios')loadBiosAdmin();
 }
 
 // FORMAT DATE
@@ -334,6 +348,50 @@ async function deleteAllAlbumPhotos(){
 }
 
 
+
+
+async function loadBiosAdmin(){
+  const list=document.getElementById('bios-list');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>Cargando...</div>';
+  try{
+    const data=await supa('/rest/v1/birthdays?select=id,name,bio,nickname&order=name.asc');
+    if(!data||data.length===0){list.innerHTML='<div class="empty">Sin cumpleaños cargados.</div>';return;}
+    list.innerHTML='';
+    data.forEach(p=>{
+      const div=document.createElement('div');
+      div.style.cssText='background:rgba(60,18,100,0.6);border:1px solid rgba(200,160,255,0.25);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:10px;';
+      div.innerHTML=
+        '<div style="font-size:14px;font-weight:500;color:#C97EFF;">'+p.name+'</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+
+          '<div>'+
+            '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(200,160,255,0.6);margin-bottom:6px;">🏅 Apodo Presidencial</div>'+
+            '<input id="nick-'+p.id+'" type="text" value="'+(p.nickname||'')+'" placeholder="Ej: La Ministra del Caos" maxlength="60" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.3);border-radius:10px;color:white;font-family:DM Sans,sans-serif;font-size:13px;padding:10px 12px;outline:none;">'+
+          '</div>'+
+          '<div>'+
+            '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(200,160,255,0.6);margin-bottom:6px;">📝 Descripción (para el mail)</div>'+
+            '<textarea id="bio-'+p.id+'" placeholder="Ej: La gestora de toda la comunidad..." style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,255,0.3);border-radius:10px;color:white;font-family:DM Sans,sans-serif;font-size:13px;padding:10px 12px;resize:vertical;min-height:60px;outline:none;">'+(p.bio||'')+'</textarea>'+
+          '</div>'+
+        '</div>'+
+        '<button onclick="saveBio('+p.id+',this)" style="align-self:flex-end;padding:7px 18px;background:#C97EFF;color:#3D1264;border:none;border-radius:8px;font-family:DM Sans,sans-serif;font-size:13px;font-weight:500;cursor:pointer;">Guardar</button>';
+      list.appendChild(div);
+    });
+  }catch(e){list.innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+async function saveBio(id,btn){
+  const bio=document.getElementById('bio-'+id).value.trim()||null;
+  const nickname=document.getElementById('nick-'+id).value.trim()||null;
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    await fetch(SUPA_URL+'/rest/v1/birthdays?id=eq.'+id,{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({bio,nickname})
+    });
+    btn.textContent='✓ Guardado';
+    setTimeout(()=>{btn.disabled=false;btn.textContent='Guardar';},2000);
+  }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.textContent='Guardar';}
+}
 
 async function loadCortitoAdmin(){
   const list=document.getElementById('cortitos-admin-list');
